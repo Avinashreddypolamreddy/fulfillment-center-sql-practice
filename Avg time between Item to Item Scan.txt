@@ -1,0 +1,17 @@
+#Avg time between Item to Item Scans
+WITH scans_with_lag AS (
+    SELECT
+        LoginID,
+        Date,
+        EventTimestamp,
+        LAG(EventTimestamp) OVER (PARTITION BY LoginID, Date ORDER BY EventTimestamp) AS prev_event
+    FROM scans
+)
+SELECT
+    LoginID,
+    Date,
+    ROUND(AVG(EXTRACT(EPOCH FROM EventTimestamp - prev_event)) / 60, 2) AS avg_item_scan_time_minutes
+FROM scans_with_lag
+WHERE prev_event IS NOT NULL
+GROUP BY LoginID, Date
+ORDER BY LoginID, Date;
