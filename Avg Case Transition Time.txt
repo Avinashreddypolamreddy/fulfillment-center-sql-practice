@@ -1,0 +1,28 @@
+#Avg Case Transition Time
+WITH case_times AS (
+    SELECT
+        LoginID,
+        Date,
+        CaseID,
+        MIN(EventTimestamp) AS case_start,
+        MAX(EventTimestamp) AS case_end
+    FROM scans
+    GROUP BY LoginID, Date, CaseID
+),
+case_with_lag AS (
+    SELECT
+        LoginID,
+        Date,
+        CaseID,
+        case_start,
+        LAG(case_end) OVER (PARTITION BY LoginID, Date ORDER BY case_start) AS prev_case_end
+    FROM case_times
+)
+SELECT
+    LoginID,
+    Date,
+    ROUND(AVG(EXTRACT(EPOCH FROM case_start - prev_case_end)) / 60, 2) AS avg_case_transition_minutes
+FROM case_with_lag
+WHERE prev_case_end IS NOT NULL
+GROUP BY LoginID, Date
+ORDER BY LoginID, Date;
