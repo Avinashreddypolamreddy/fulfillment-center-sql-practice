@@ -1,0 +1,18 @@
+#Avg Case Completion Time
+WITH case_durations AS (
+    SELECT
+        LoginID,
+        Date,
+        CaseID,
+        MIN(EventTimestamp) AS case_start,
+        MAX(EventTimestamp) AS case_end
+    FROM scans
+    GROUP BY LoginID, Date, CaseID
+)
+SELECT
+    LoginID,
+    Date,
+    ROUND(AVG(EXTRACT(EPOCH FROM case_end - case_start)) / 60, 2) AS avg_case_completion_minutes
+FROM case_durations
+GROUP BY LoginID, Date
+ORDER BY LoginID, Date;
